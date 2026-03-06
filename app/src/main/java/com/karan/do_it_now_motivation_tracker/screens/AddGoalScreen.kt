@@ -1,4 +1,10 @@
 package com.karan.do_it_now_motivation_tracker.screens
 
-class AddGoalScreen {
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.navigation.NavController
+
+@Composable
+fun AddGoalScreen(navController: NavController) {
+    Text("Add Goal Screen")
 }
