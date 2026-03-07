@@ -1,17 +1,29 @@
 package com.karan.do_it_now_motivation_tracker.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.karan.do_it_now_motivation_tracker.model.Goal
+import com.karan.do_it_now_motivation_tracker.viewmodel.GoalViewModel
+import androidx.compose.ui.platform.LocalContext
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddGoalScreen(navController: NavController) {
+fun AddGoalScreen(
+    navController: NavController,
+    viewModel: GoalViewModel
+) {
 
-    var goalTitle by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    var title by remember { mutableStateOf("") }
+    var startDate by remember { mutableStateOf("") }
+    var endDate by remember { mutableStateOf("") }
+    var difficulty by remember { mutableStateOf("Easy") }
 
     Column(
         modifier = Modifier
@@ -21,14 +33,14 @@ fun AddGoalScreen(navController: NavController) {
 
         Text(
             text = "Create Goal",
-            fontSize = 26.sp
+            style = MaterialTheme.typography.headlineMedium
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         OutlinedTextField(
-            value = goalTitle,
-            onValueChange = { goalTitle = it },
+            value = title,
+            onValueChange = { title = it },
             label = { Text("Goal Title") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -36,8 +48,8 @@ fun AddGoalScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = startDate,
+            onValueChange = { startDate = it },
             label = { Text("Start Date") },
             modifier = Modifier.fillMaxWidth()
         )
@@ -45,49 +57,79 @@ fun AddGoalScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = endDate,
+            onValueChange = { endDate = it },
             label = { Text("End Date") },
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Text("Difficulty")
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Row {
 
-            AssistChip(
-                onClick = { },
+            FilterChip(
+                selected = difficulty == "Easy",
+                onClick = { difficulty = "Easy" },
                 label = { Text("Easy") }
             )
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            AssistChip(
-                onClick = { },
+            FilterChip(
+                selected = difficulty == "Medium",
+                onClick = { difficulty = "Medium" },
                 label = { Text("Medium") }
             )
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            AssistChip(
-                onClick = { },
+            FilterChip(
+                selected = difficulty == "Hard",
+                onClick = { difficulty = "Hard" },
                 label = { Text("Hard") }
             )
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(30.dp))
 
         Button(
             onClick = {
-                navController.navigate("dashboard")
+
+                if (title.isBlank()) {
+
+                    Toast
+                        .makeText(context, "Please enter goal title", Toast.LENGTH_SHORT)
+                        .show()
+
+                    return@Button
+                }
+
+                val goal = Goal(
+                    id = viewModel.goals.size + 1,
+                    title = title,
+                    startDate = startDate,
+                    endDate = endDate,
+                    difficulty = difficulty
+                )
+
+                viewModel.addGoal(goal)
+
+                Toast
+                    .makeText(context, "Goal added successfully 🎉", Toast.LENGTH_SHORT)
+                    .show()
+
+                navController.popBackStack()
+
             },
             modifier = Modifier.fillMaxWidth()
         ) {
+
             Text("Create Goal")
+
         }
     }
 }

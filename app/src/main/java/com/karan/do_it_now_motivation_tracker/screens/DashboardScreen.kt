@@ -9,19 +9,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-
-data class Goal(
-    val title: String,
-    val progress: String
-)
+import com.karan.do_it_now_motivation_tracker.viewmodel.GoalViewModel
 
 @Composable
-fun DashboardScreen(navController: NavController) {
+fun DashboardScreen(
+    navController: NavController,
+    viewModel: GoalViewModel
+) {
 
-    val goals = listOf(
-        Goal("Learn Android Development", "Day 3 / 10"),
-        Goal("Gym Workout", "Day 7 / 30")
-    )
+    val goals = viewModel.goals
 
     Column(
         modifier = Modifier
@@ -62,11 +58,20 @@ fun DashboardScreen(navController: NavController) {
                         .fillMaxWidth()
                         .padding(vertical = 8.dp)
                 ) {
+
                     Column(
                         modifier = Modifier.padding(16.dp)
                     ) {
+
                         Text(goal.title)
-                        Text(goal.progress)
+
+                        Text(
+                            "${goal.startDate} → ${goal.endDate}"
+                        )
+
+                        Text(
+                            "Difficulty: ${goal.difficulty}"
+                        )
                     }
                 }
             }
