@@ -2,6 +2,8 @@ package com.karan.do_it_now_motivation_tracker.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -10,6 +12,8 @@ import androidx.navigation.NavController
 import com.karan.do_it_now_motivation_tracker.model.Goal
 import com.karan.do_it_now_motivation_tracker.viewmodel.GoalViewModel
 import androidx.compose.ui.platform.LocalContext
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +28,9 @@ fun AddGoalScreen(
     var startDate by remember { mutableStateOf("") }
     var endDate by remember { mutableStateOf("") }
     var difficulty by remember { mutableStateOf("Easy") }
+
+    var showStartPicker by remember { mutableStateOf(false) }
+    var showEndPicker by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -49,18 +56,30 @@ fun AddGoalScreen(
 
         OutlinedTextField(
             value = startDate,
-            onValueChange = { startDate = it },
+            onValueChange = {},
+            readOnly = true,
             label = { Text("Start Date") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                IconButton(onClick = { showStartPicker = true }) {
+                    Icon(Icons.Default.DateRange, contentDescription = "Pick Date")
+                }
+            }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = endDate,
-            onValueChange = { endDate = it },
+            onValueChange = {},
+            readOnly = true,
             label = { Text("End Date") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                IconButton(onClick = { showEndPicker = true }) {
+                    Icon(Icons.Default.DateRange, contentDescription = "Pick Date")
+                }
+            }
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -101,9 +120,11 @@ fun AddGoalScreen(
 
                 if (title.isBlank()) {
 
-                    Toast
-                        .makeText(context, "Please enter goal title", Toast.LENGTH_SHORT)
-                        .show()
+                    Toast.makeText(
+                        context,
+                        "Please enter goal title",
+                        Toast.LENGTH_SHORT
+                    ).show()
 
                     return@Button
                 }
@@ -118,17 +139,88 @@ fun AddGoalScreen(
 
                 viewModel.addGoal(goal)
 
-                Toast
-                    .makeText(context, "Goal added successfully 🎉", Toast.LENGTH_SHORT)
-                    .show()
+                Toast.makeText(
+                    context,
+                    "Goal added successfully 🎉",
+                    Toast.LENGTH_SHORT
+                ).show()
 
                 navController.popBackStack()
-
             },
             modifier = Modifier.fillMaxWidth()
         ) {
 
             Text("Create Goal")
+
+        }
+    }
+
+    if (showStartPicker) {
+
+        val datePickerState = rememberDatePickerState()
+
+        DatePickerDialog(
+            onDismissRequest = { showStartPicker = false },
+            confirmButton = {
+
+                TextButton(onClick = {
+
+                    val millis = datePickerState.selectedDateMillis
+
+                    if (millis != null) {
+
+                        val formatter = SimpleDateFormat(
+                            "dd MMM yyyy",
+                            Locale.getDefault()
+                        )
+
+                        startDate = formatter.format(Date(millis))
+                    }
+
+                    showStartPicker = false
+
+                }) {
+                    Text("OK")
+                }
+            }
+        ) {
+
+            DatePicker(state = datePickerState)
+
+        }
+    }
+
+    if (showEndPicker) {
+
+        val datePickerState = rememberDatePickerState()
+
+        DatePickerDialog(
+            onDismissRequest = { showEndPicker = false },
+            confirmButton = {
+
+                TextButton(onClick = {
+
+                    val millis = datePickerState.selectedDateMillis
+
+                    if (millis != null) {
+
+                        val formatter = SimpleDateFormat(
+                            "dd MMM yyyy",
+                            Locale.getDefault()
+                        )
+
+                        endDate = formatter.format(Date(millis))
+                    }
+
+                    showEndPicker = false
+
+                }) {
+                    Text("OK")
+                }
+            }
+        ) {
+
+            DatePicker(state = datePickerState)
 
         }
     }
