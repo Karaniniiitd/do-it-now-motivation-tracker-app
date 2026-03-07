@@ -19,73 +19,104 @@ fun DashboardScreen(
 
     val goals = viewModel.goals
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
+    Scaffold(
 
-        Text(
-            text = "Good Evening 👋",
-            fontSize = 24.sp
-        )
+        floatingActionButton = {
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
+            FloatingActionButton(
+                onClick = {
+                    navController.navigate("addGoal")
+                }
             ) {
-                Text("🔥 Current Streak")
-                Text("5 Days", fontSize = 20.sp)
+                Text("+")
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+    ) { padding ->
 
-        Text("Your Goals", fontSize = 18.sp)
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Good Evening 👋",
+                fontSize = 26.sp
+            )
 
-        LazyColumn {
+            Spacer(modifier = Modifier.height(16.dp))
 
-            items(goals) { goal ->
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
 
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                Column(
+                    modifier = Modifier.padding(16.dp)
                 ) {
 
-                    Column(
-                        modifier = Modifier.padding(16.dp)
+                    Text("🔥 Current Streak")
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = "5 Days",
+                        fontSize = 22.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = "Your Goals",
+                fontSize = 20.sp
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            LazyColumn {
+
+                items(goals) { goal ->
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
                     ) {
 
-                        Text(goal.title)
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
 
-                        Text(
-                            "${goal.startDate} → ${goal.endDate}"
-                        )
+                            Text(
+                                text = goal.title,
+                                fontSize = 18.sp
+                            )
 
-                        Text(
-                            "Difficulty: ${goal.difficulty}"
-                        )
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            Text(
+                                text = "${goal.startDate} → ${goal.endDate}"
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            LinearProgressIndicator(
+                                progress = 0.6f,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            Text(
+                                text = "Difficulty: ${goal.difficulty}"
+                            )
+                        }
                     }
                 }
             }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                navController.navigate("addGoal")
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("+ Add New Goal")
         }
     }
 }
