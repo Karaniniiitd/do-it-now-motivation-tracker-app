@@ -25,12 +25,19 @@ fun AddGoalScreen(
     val context = LocalContext.current
 
     var title by remember { mutableStateOf("") }
-    var startDate by remember { mutableStateOf("") }
-    var endDate by remember { mutableStateOf("") }
+
+    var startDateMillis by remember { mutableStateOf<Long?>(null) }
+    var endDateMillis by remember { mutableStateOf<Long?>(null) }
+
+    var startDateText by remember { mutableStateOf("") }
+    var endDateText by remember { mutableStateOf("") }
+
     var difficulty by remember { mutableStateOf("Easy") }
 
     var showStartPicker by remember { mutableStateOf(false) }
     var showEndPicker by remember { mutableStateOf(false) }
+
+    val formatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
     Column(
         modifier = Modifier
@@ -55,14 +62,14 @@ fun AddGoalScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = startDate,
+            value = startDateText,
             onValueChange = {},
             readOnly = true,
             label = { Text("Start Date") },
             modifier = Modifier.fillMaxWidth(),
             trailingIcon = {
                 IconButton(onClick = { showStartPicker = true }) {
-                    Icon(Icons.Default.DateRange, contentDescription = "Pick Date")
+                    Icon(Icons.Default.DateRange, contentDescription = null)
                 }
             }
         )
@@ -70,14 +77,14 @@ fun AddGoalScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = endDate,
+            value = endDateText,
             onValueChange = {},
             readOnly = true,
             label = { Text("End Date") },
             modifier = Modifier.fillMaxWidth(),
             trailingIcon = {
                 IconButton(onClick = { showEndPicker = true }) {
-                    Icon(Icons.Default.DateRange, contentDescription = "Pick Date")
+                    Icon(Icons.Default.DateRange, contentDescription = null)
                 }
             }
         )
@@ -86,7 +93,7 @@ fun AddGoalScreen(
 
         Text("Difficulty")
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Row {
 
@@ -122,7 +129,18 @@ fun AddGoalScreen(
 
                     Toast.makeText(
                         context,
-                        "Please enter goal title",
+                        "Enter goal title",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    return@Button
+                }
+
+                if (startDateMillis == null || endDateMillis == null) {
+
+                    Toast.makeText(
+                        context,
+                        "Select start and end date",
                         Toast.LENGTH_SHORT
                     ).show()
 
@@ -132,8 +150,8 @@ fun AddGoalScreen(
                 val goal = Goal(
                     id = viewModel.goals.size + 1,
                     title = title,
-                    startDate = startDate,
-                    endDate = endDate,
+                    startDate = startDateMillis!!,
+                    endDate = endDateMillis!!,
                     difficulty = difficulty
                 )
 
@@ -141,7 +159,7 @@ fun AddGoalScreen(
 
                 Toast.makeText(
                     context,
-                    "Goal added successfully 🎉",
+                    "Goal added 🎉",
                     Toast.LENGTH_SHORT
                 ).show()
 
@@ -149,15 +167,13 @@ fun AddGoalScreen(
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-
             Text("Create Goal")
-
         }
     }
 
     if (showStartPicker) {
 
-        val datePickerState = rememberDatePickerState()
+        val state = rememberDatePickerState()
 
         DatePickerDialog(
             onDismissRequest = { showStartPicker = false },
@@ -165,34 +181,25 @@ fun AddGoalScreen(
 
                 TextButton(onClick = {
 
-                    val millis = datePickerState.selectedDateMillis
+                    state.selectedDateMillis?.let {
 
-                    if (millis != null) {
-
-                        val formatter = SimpleDateFormat(
-                            "dd MMM yyyy",
-                            Locale.getDefault()
-                        )
-
-                        startDate = formatter.format(Date(millis))
+                        startDateMillis = it
+                        startDateText = formatter.format(Date(it))
                     }
 
                     showStartPicker = false
-
                 }) {
                     Text("OK")
                 }
             }
         ) {
-
-            DatePicker(state = datePickerState)
-
+            DatePicker(state = state)
         }
     }
 
     if (showEndPicker) {
 
-        val datePickerState = rememberDatePickerState()
+        val state = rememberDatePickerState()
 
         DatePickerDialog(
             onDismissRequest = { showEndPicker = false },
@@ -200,28 +207,19 @@ fun AddGoalScreen(
 
                 TextButton(onClick = {
 
-                    val millis = datePickerState.selectedDateMillis
+                    state.selectedDateMillis?.let {
 
-                    if (millis != null) {
-
-                        val formatter = SimpleDateFormat(
-                            "dd MMM yyyy",
-                            Locale.getDefault()
-                        )
-
-                        endDate = formatter.format(Date(millis))
+                        endDateMillis = it
+                        endDateText = formatter.format(Date(it))
                     }
 
                     showEndPicker = false
-
                 }) {
                     Text("OK")
                 }
             }
         ) {
-
-            DatePicker(state = datePickerState)
-
+            DatePicker(state = state)
         }
     }
 }
