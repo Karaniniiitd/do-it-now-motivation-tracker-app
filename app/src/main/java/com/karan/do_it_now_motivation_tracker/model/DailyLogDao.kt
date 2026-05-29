@@ -23,4 +23,7 @@ interface DailyLogDao {
 
     @Query("DELETE FROM daily_logs")
     suspend fun deleteAll()
+
+    @Query("SELECT * FROM daily_logs ORDER BY date DESC")
+    suspend fun getAllLogsOnce(): List<DailyLog>
 }

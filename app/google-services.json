@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "766966790762",
+    "firebase_url": "https://do-it-now-tracker-default-rtdb.firebaseio.com",
+    "project_id": "do-it-now-tracker",
+    "storage_bucket": "do-it-now-tracker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:766966790762:android:44fd94f85636f19b3b6813",
+        "android_client_info": {
+          "package_name": "com.karan.do_it_now_motivation_tracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "766966790762-9g8a04ist29ic3p6ednsntosoatb3h63.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.karan.do_it_now_motivation_tracker",
+            "certificate_hash": "41075bf62513496875430d278eaade2bd1c47db3"
+          }
+        },
+        {
+          "client_id": "766966790762-96h9f21rafusmp6n0ds9snsvugk279u8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDC7ECGGhoXGf1AROeAjckxvfrtT_1Djjs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "766966790762-96h9f21rafusmp6n0ds9snsvugk279u8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

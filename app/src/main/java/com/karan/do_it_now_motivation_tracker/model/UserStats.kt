@@ -9,7 +9,8 @@ data class UserStats(
     val id: Int = 1,          // singleton row
     val totalXp: Int = 0,
     val level: Int = 1,
-    val levelTitle: String = "Rookie"
+    val levelTitle: String = "Rookie",
+    val freezeTokens: Int = 0 // earned from Boss completions
 )
 
 // ── Level thresholds ───────────────────────────────────────────

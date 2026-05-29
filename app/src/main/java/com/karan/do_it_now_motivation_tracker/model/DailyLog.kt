@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class DailyLog(
     @PrimaryKey
     val date: String,
-    val goalsCompletedCount: Int = 0
+    val goalsCompletedCount: Int = 0,
+    val goalsFailedCount: Int = 0
 )

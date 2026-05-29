@@ -14,4 +14,7 @@ interface UserStatsDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(stats: UserStats)
+
+    @Query("SELECT * FROM user_stats WHERE id = 1")
+    suspend fun getUserStatsOnce(): UserStats?
 }

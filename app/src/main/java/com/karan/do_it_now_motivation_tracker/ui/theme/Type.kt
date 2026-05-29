@@ -5,70 +5,84 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
+// Press Start 2P is inherently heavier/wider than standard fonts —
+// sizes are scaled down ~35% vs regular font equivalents.
 val Typography = Typography(
-    headlineLarge = TextStyle(
-        fontFamily = OutfitFontFamily,
-        fontWeight = FontWeight.SemiBold,
+    displayLarge = TextStyle(
+        fontFamily = PixelFontFamily,
+        fontWeight = FontWeight.Normal,
         fontSize = 32.sp,
         lineHeight = 40.sp,
-        letterSpacing = (-0.5).sp
+        letterSpacing = 2.sp
     ),
-    headlineMedium = TextStyle(
-        fontFamily = OutfitFontFamily,
-        fontWeight = FontWeight.Medium,
+    displayMedium = TextStyle(
+        fontFamily = PixelFontFamily,
+        fontWeight = FontWeight.Normal,
         fontSize = 26.sp,
         lineHeight = 34.sp,
-        letterSpacing = (-0.3).sp
+        letterSpacing = 1.sp
     ),
-    headlineSmall = TextStyle(
-        fontFamily = OutfitFontFamily,
-        fontWeight = FontWeight.Medium,
+    headlineLarge = TextStyle(
+        fontFamily = PixelFontFamily,
+        fontWeight = FontWeight.Normal,
         fontSize = 20.sp,
-        lineHeight = 28.sp
+        lineHeight = 28.sp,
+        letterSpacing = 1.sp
     ),
-    titleLarge = TextStyle(
-        fontFamily = OutfitFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 18.sp,
-        lineHeight = 26.sp
-    ),
-    titleMedium = TextStyle(
-        fontFamily = InterFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 15.sp,
-        lineHeight = 22.sp,
-        letterSpacing = 0.1.sp
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = InterFontFamily,
+    headlineMedium = TextStyle(
+        fontFamily = PixelFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
-        lineHeight = 24.sp
+        lineHeight = 22.sp,
+        letterSpacing = 0.5.sp
     ),
-    bodyMedium = TextStyle(
-        fontFamily = InterFontFamily,
+    headlineSmall = TextStyle(
+        fontFamily = PixelFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp
+        fontSize = 13.sp,
+        lineHeight = 18.sp
     ),
-    bodySmall = TextStyle(
-        fontFamily = InterFontFamily,
-        fontWeight = FontWeight.Light,
-        fontSize = 12.sp,
-        lineHeight = 16.sp
-    ),
-    labelLarge = TextStyle(
-        fontFamily = InterFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.1.sp
-    ),
-    labelSmall = TextStyle(
-        fontFamily = InterFontFamily,
+    titleLarge = TextStyle(
+        fontFamily = PixelFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 11.sp,
-        lineHeight = 16.sp,
+        lineHeight = 16.sp
+    ),
+    titleMedium = TextStyle(
+        fontFamily = PixelFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 10.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 0.5.sp
+    ),
+    bodyLarge = TextStyle(
+        fontFamily = PixelFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 10.sp,
+        lineHeight = 16.sp
+    ),
+    bodyMedium = TextStyle(
+        fontFamily = PixelFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 9.sp,
+        lineHeight = 14.sp
+    ),
+    bodySmall = TextStyle(
+        fontFamily = PixelFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 8.sp,
+        lineHeight = 12.sp
+    ),
+    labelLarge = TextStyle(
+        fontFamily = PixelFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 9.sp,
+        letterSpacing = 1.sp
+    ),
+    labelSmall = TextStyle(
+        fontFamily = PixelFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 7.sp,
         letterSpacing = 0.5.sp
     )
 )
