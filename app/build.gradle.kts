@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -55,6 +56,20 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+
+    // WorkManager
+    implementation(libs.work.runtime.ktx)
+
+    // Glance (Home Screen Widget)
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
+
+    // Firebase (BOM manages all Firebase versions)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.database)
+    implementation(libs.firebase.messaging)
+    implementation(libs.google.play.auth)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

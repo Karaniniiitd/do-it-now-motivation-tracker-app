@@ -1,11 +1,6 @@
 package com.karan.do_it_now_motivation_tracker.screens
 
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -24,467 +19,518 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.karan.do_it_now_motivation_tracker.model.DailyLog
+import com.karan.do_it_now_motivation_tracker.model.DailyQuest
 import com.karan.do_it_now_motivation_tracker.model.Goal
-import com.karan.do_it_now_motivation_tracker.model.UserStats
-import com.karan.do_it_now_motivation_tracker.model.xpToLevelInfo
-import com.karan.do_it_now_motivation_tracker.ui.components.ActivityCalendar
+import com.karan.do_it_now_motivation_tracker.model.progress
+import com.karan.do_it_now_motivation_tracker.model.recurrenceLabel
 import com.karan.do_it_now_motivation_tracker.ui.components.Categories
-import com.karan.do_it_now_motivation_tracker.ui.theme.AtmosphericBlack
-import com.karan.do_it_now_motivation_tracker.ui.theme.CardBorder
-import com.karan.do_it_now_motivation_tracker.ui.theme.CardBorderBright
-import com.karan.do_it_now_motivation_tracker.ui.theme.CyanGlow
-import com.karan.do_it_now_motivation_tracker.ui.theme.DimText
-import com.karan.do_it_now_motivation_tracker.ui.theme.ElectricBlue
-import com.karan.do_it_now_motivation_tracker.ui.theme.GlowOrange
-import com.karan.do_it_now_motivation_tracker.ui.theme.MidnightCard
-import com.karan.do_it_now_motivation_tracker.ui.theme.MutedPurple
-import com.karan.do_it_now_motivation_tracker.ui.theme.MutedText
-import com.karan.do_it_now_motivation_tracker.ui.theme.SoftGreen
-import com.karan.do_it_now_motivation_tracker.ui.theme.SoftIndigo
-import com.karan.do_it_now_motivation_tracker.ui.theme.SoftRed
-import com.karan.do_it_now_motivation_tracker.ui.theme.SoftWhite
-import com.karan.do_it_now_motivation_tracker.ui.theme.SoftYellow
+import com.karan.do_it_now_motivation_tracker.ui.components.PixelCategoryIcon
+import com.karan.do_it_now_motivation_tracker.ui.components.PixelIconCalendar
+import com.karan.do_it_now_motivation_tracker.ui.components.PixelIconClipboard
+import com.karan.do_it_now_motivation_tracker.ui.components.PixelIconFlame
+import com.karan.do_it_now_motivation_tracker.ui.components.PixelIconLineChart
+import com.karan.do_it_now_motivation_tracker.ui.theme.PixelFontFamily
+import com.karan.do_it_now_motivation_tracker.util.UserPrefsManager
 import com.karan.do_it_now_motivation_tracker.viewmodel.GoalViewModel
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-private val quotes = listOf(
-    "The secret of getting ahead is getting started.",
-    "It always seems impossible until it's done.",
-    "Small daily improvements lead to stunning results.",
-    "Discipline is choosing what you want most.",
-    "Push yourself, because no one else will.",
-    "You are never too old to set another goal.",
-    "A year from now you'll wish you started today.",
-    "Success is built on consistency.",
-    "Every day is a chance to get better.",
-    "The pain of discipline weighs ounces."
-)
+private val sdf     = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+private val dispFmt = SimpleDateFormat("dd MMM",     Locale.getDefault())
 
-private fun greeting(): String {
-    return when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
-        in 5..11  -> "Good morning"
-        in 12..16 -> "Good afternoon"
-        else      -> "Good evening"
-    }
+private fun weeklyFocus(logs: List<DailyLog>): Int {
+    val cutoff    = System.currentTimeMillis() - 7 * 86_400_000L
+    val activeDays = logs.count { (sdf.parse(it.date)?.time ?: 0L) >= cutoff && it.goalsCompletedCount > 0 }
+    return (activeDays * 100) / 7
 }
 
-fun calculateProgress(start: Long, end: Long): Float {
-    val now = System.currentTimeMillis()
-    if (end <= start) return 0f
-    return ((now - start).toFloat() / (end - start).toFloat()).coerceIn(0f, 1f)
+private fun monthlyDays(logs: List<DailyLog>): Int {
+    val cutoff = System.currentTimeMillis() - 30 * 86_400_000L
+    return logs.count { (sdf.parse(it.date)?.time ?: 0L) >= cutoff && it.goalsCompletedCount > 0 }
 }
 
 @Composable
 fun DashboardScreen(navController: NavController, viewModel: GoalViewModel) {
+    val context        = LocalContext.current
+    val prefs          = remember { UserPrefsManager.getInstance(context) }
+    val userName       = remember { prefs.userName }
+
     val activeGoals    by viewModel.activeGoals.collectAsState()
-    val completedGoals by viewModel.completedGoals.collectAsState()
-    val currentStreak  by viewModel.currentStreak.collectAsState()
-    val totalGoals     by viewModel.totalGoals.collectAsState()
     val completedCount by viewModel.completedGoalCount.collectAsState()
+    val totalGoals     by viewModel.totalGoals.collectAsState()
+    val currentStreak  by viewModel.currentStreak.collectAsState()
     val todaysFocus    by viewModel.todaysFocus.collectAsState()
     val yearlyLogs     by viewModel.yearlyLogs.collectAsState()
     val userStats      by viewModel.userStats.collectAsState()
 
-    val fmt = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-    val quoteIdx = remember { Calendar.getInstance().get(Calendar.DAY_OF_YEAR) % quotes.size }
-    var tab by remember { mutableIntStateOf(0) }
+    val goalPercent    = if (totalGoals > 0) (completedCount.toFloat() / totalGoals) else 0f
+    val weekly         = remember(yearlyLogs) { weeklyFocus(yearlyLogs) }
+    val monthly        = remember(yearlyLogs) { monthlyDays(yearlyLogs) }
+    val todaysQuests   by viewModel.todaysQuests.collectAsState()
 
-    val inf = rememberInfiniteTransition(label = "dash")
-    val glowShift by inf.animateFloat(
-        0f, 1f,
-        infiniteRepeatable(tween(9000, easing = LinearEasing), RepeatMode.Reverse), "glow"
-    )
+    // Animate donut ring
+    val ringAnim = remember { Animatable(0f) }
+    LaunchedEffect(goalPercent) { ringAnim.animateTo(goalPercent, tween(1200)) }
 
-    Box(Modifier.fillMaxSize().background(AtmosphericBlack)) {
-        // Ambient background orbs
-        Canvas(Modifier.fillMaxSize()) {
-            drawCircle(
-                Brush.radialGradient(
-                    listOf(SoftIndigo.copy(alpha = 0.06f), Color.Transparent),
-                    center = Offset(size.width * 0.85f, size.height * (0.1f + glowShift * 0.08f)),
-                    radius = size.width * 0.55f
-                ),
-                radius = size.width * 0.55f,
-                center = Offset(size.width * 0.85f, size.height * (0.1f + glowShift * 0.08f))
-            )
-            drawCircle(
-                Brush.radialGradient(
-                    listOf(CyanGlow.copy(alpha = 0.04f), Color.Transparent),
-                    center = Offset(size.width * 0.15f, size.height * (0.65f - glowShift * 0.08f)),
-                    radius = size.width * 0.45f
-                ),
-                radius = size.width * 0.45f,
-                center = Offset(size.width * 0.15f, size.height * (0.65f - glowShift * 0.08f))
+    // Generate today's quests if none exist yet
+    LaunchedEffect(Unit) { viewModel.ensureTodaysQuests() }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        item { Spacer(Modifier.height(44.dp)) }
+
+        // ── HELLO header ──────────────────────────────────────────
+        item {
+            Text(
+                text      = "HELLO,\n$userName",
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize  = 36.sp,
+                fontFamily = PixelFontFamily,
+                lineHeight = 48.sp
             )
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            // ── Greeting ──────────────────────────────────────
-            item {
-                Spacer(Modifier.height(48.dp))
-                Text(
-                    greeting(),
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = SoftWhite
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    quotes[quoteIdx],
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MutedText,
-                    lineHeight = 20.sp
-                )
-            }
+        // ── Daily goal ring card ──────────────────────────────────
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(2.dp, MaterialTheme.colorScheme.primary)
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(20.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Donut ring with halftone feel (dashed segments)
+                    Box(
+                        modifier = Modifier.size(160.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Canvas(Modifier.fillMaxSize()) {
+                            val strokeW = 18.dp.toPx()
+                            val r       = (size.minDimension - strokeW) / 2f
+                            val tl      = Offset(center.x - r, center.y - r)
+                            val sz      = Size(r * 2, r * 2)
+                            // Track
+                            drawArc(Color(0xFF1A1A1A), -90f, 360f, false, tl, sz,
+                                style = Stroke(strokeW, cap = StrokeCap.Square))
+                            // Progress — pixel square cap for authenticity
+                            if (ringAnim.value > 0.005f) {
+                                drawArc(Color.White, -90f, 360f * ringAnim.value, false, tl, sz,
+                                    style = Stroke(strokeW, cap = StrokeCap.Square))
+                            }
+                        }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "${(goalPercent * 100).toInt()}%",
+                                color = MaterialTheme.colorScheme.onBackground,
+                                fontSize   = 28.sp,
+                                fontFamily = PixelFontFamily
+                            )
+                            Text(
+                                "DAILY\nGOAL",
+                                color      = Color(0xFF888888),
+                                fontSize   = 7.sp,
+                                fontFamily = PixelFontFamily,
+                                lineHeight = 12.sp
+                            )
+                        }
+                    }
 
-            // ── XP / Level bar ────────────────────────────────
-            item { XpLevelBar(userStats) }
+                    Spacer(Modifier.height(14.dp))
 
-            // ── Today's Focus ─────────────────────────────────
-            todaysFocus?.let { focus ->
-                item { TodayFocusCard(focus, fmt, onComplete = { viewModel.completeGoal(focus) }) }
-            }
-
-            // ── Stats row ─────────────────────────────────────
-            item {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    GlowMiniCard(Modifier.weight(1f), "🔥", "Streak", "$currentStreak days", GlowOrange)
-                    GlowMiniCard(Modifier.weight(1f), "✅", "Done", "$completedCount / $totalGoals", SoftGreen)
-                    GlowMiniCard(Modifier.weight(1f), "📋", "Active", "${activeGoals.size}", CyanGlow)
-                }
-            }
-
-            // ── Activity calendar ─────────────────────────────
-            item { ActivityCalendar(yearlyLogs) }
-
-            // ── Tabs ──────────────────────────────────────────
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    AtmosphericTab("Active · ${activeGoals.size}", tab == 0) { tab = 0 }
-                    AtmosphericTab("Done · ${completedGoals.size}", tab == 1) { tab = 1 }
-                }
-            }
-
-            // ── Goal list ─────────────────────────────────────
-            val goals = if (tab == 0) activeGoals else completedGoals
-            if (goals.isEmpty()) {
-                item {
-                    Box(Modifier.fillMaxWidth().height(80.dp), Alignment.Center) {
+                    // Today's focus
+                    val focusTitle = todaysFocus?.title?.uppercase() ?: "ADD A GOAL TO START"
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(Modifier.width(3.dp).height(18.dp).background(MaterialTheme.colorScheme.primary))
+                        Spacer(Modifier.width(10.dp))
                         Text(
-                            if (tab == 0) "No active goals — tap + to begin" else "Nothing completed yet",
-                            style = MaterialTheme.typography.bodyMedium, color = DimText
+                            "TODAY'S FOCUS: $focusTitle",
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontSize   = 9.sp,
+                            fontFamily = PixelFontFamily,
+                            lineHeight = 14.sp,
+                            maxLines   = 2,
+                            overflow   = TextOverflow.Ellipsis,
+                            modifier   = Modifier.fillMaxWidth()
                         )
                     }
                 }
             }
-            items(goals, key = { it.id }) { goal ->
-                GoalCard(
-                    goal = goal, formatter = fmt,
-                    onComplete   = { viewModel.completeGoal(goal) },
-                    onUncomplete = { viewModel.uncompleteGoal(goal) },
-                    onEdit       = { navController.navigate("editGoal/${goal.id}") },
-                    onDelete     = { viewModel.deleteGoal(goal) }
-                )
-            }
-
-            item { Spacer(Modifier.height(90.dp)) }
         }
-    }
-}
 
-// ── XP Level Bar ──────────────────────────────────────────────
-@Composable
-private fun XpLevelBar(stats: UserStats) {
-    val (level, title, progress) = xpToLevelInfo(stats.totalXp)
-    val (currentProg, maxProg) = progress
-    val fraction = if (maxProg > 0) currentProg.toFloat() / maxProg else 1f
-
-    val levelColor = when (level) {
-        1 -> MutedText; 2 -> SoftGreen; 3 -> CyanGlow; 4 -> ElectricBlue; 5 -> MutedPurple; else -> GlowOrange
-    }
-
-    Box(
-        modifier = Modifier.fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MidnightCard.copy(alpha = 0.5f))
-            .border(1.dp, levelColor.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
-            .padding(16.dp)
-    ) {
-        Column {
-            Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(levelColor.copy(alpha = 0.15f))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
-                        Text("Lv $level", style = MaterialTheme.typography.labelLarge, color = levelColor, fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(Modifier.width(10.dp))
-                    Text(title, style = MaterialTheme.typography.titleMedium, color = SoftWhite)
+        // ── 2×2 stats grid ────────────────────────────────────────
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    PixelStatBox(Modifier.weight(1f),
+                        icon  = { PixelIconFlame(it)    },
+                        value = "$currentStreak",
+                        unit  = "days",
+                        label = "STREAK"
+                    )
+                    PixelStatBox(Modifier.weight(1f),
+                        icon  = { PixelIconClipboard(it) },
+                        value = "${activeGoals.size}",
+                        unit  = "goals",
+                        label = "ACTIVE GOALS"
+                    )
                 }
-                Text(
-                    "${stats.totalXp} XP",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MutedText
-                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    PixelStatBox(Modifier.weight(1f),
+                        icon  = { PixelIconLineChart(it) },
+                        value = "$weekly%",
+                        unit  = "",
+                        label = "WEEKLY FOCUS"
+                    )
+                    PixelStatBox(Modifier.weight(1f),
+                        icon  = { PixelIconCalendar(it) },
+                        value = "$monthly",
+                        unit  = "days",
+                        label = "MONTHLY"
+                    )
+                }
             }
-            Spacer(Modifier.height(10.dp))
-            LinearProgressIndicator(
-                progress = { fraction.coerceIn(0f, 1f) },
-                modifier = Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(3.dp)),
-                color = levelColor,
-                trackColor = CardBorder.copy(alpha = 0.3f),
-                strokeCap = StrokeCap.Round
-            )
-            Spacer(Modifier.height(5.dp))
-            Text(
-                "$currentProg / $maxProg XP to next level",
-                style = MaterialTheme.typography.bodySmall,
-                color = DimText
-            )
         }
-    }
-}
 
-// ── Today's Focus Card ────────────────────────────────────────
-@Composable
-private fun TodayFocusCard(goal: Goal, formatter: SimpleDateFormat, onComplete: () -> Unit) {
-    val catColor = Categories.color(goal.category)
-    val daysLeft = ((goal.endDate - System.currentTimeMillis()) / 86400000L).coerceAtLeast(0)
+        // ── XP segment bar ────────────────────────────────────────
+        item {
+            val xp        = userStats.totalXp
+            val level     = userStats.level
+            val title     = userStats.levelTitle
+            val threshold = when { xp < 100 -> 100; xp < 300 -> 300; xp < 600 -> 600; xp < 1000 -> 1000; else -> 2000 }
+            val prev      = when { xp < 100 -> 0;   xp < 300 -> 100; xp < 600 -> 300; xp < 1000 -> 600;  else -> 1000 }
+            val frac      = ((xp - prev).toFloat() / (threshold - prev)).coerceIn(0f, 1f)
+            val segments  = 12
+            val filled    = (frac * segments).toInt()
 
-    Box(
-        modifier = Modifier.fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(catColor.copy(alpha = 0.12f), MidnightCard.copy(alpha = 0.5f))
-                )
-            )
-            .border(1.dp, catColor.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
-            .padding(20.dp)
-    ) {
-        Column {
-            Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                Text(
-                    "📌  Today's Focus",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = catColor,
-                    letterSpacing = 1.sp
-                )
-                Box(
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(2.dp, MaterialTheme.colorScheme.primary)
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(14.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
+                        Text(
+                            "LV $level  ${title.uppercase()}",
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontSize   = 9.sp,
+                            fontFamily = PixelFontFamily
+                        )
+                        Text(
+                            "$xp XP",
+                            color      = Color(0xFF888888),
+                            fontSize   = 9.sp,
+                            fontFamily = PixelFontFamily
+                        )
+                    }
+                    // Pixel segment bar
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        repeat(segments) { i ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(10.dp)
+                                    .border(1.dp, Color(0xFF444444))
+                                    .background(if (i < filled) Color.White else Color.Black)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Daily Quests widget ───────────────────────────────────
+        if (todaysQuests.isNotEmpty()) {
+            item {
+                Column(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(catColor.copy(alpha = 0.1f))
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                        .fillMaxWidth()
+                        .border(2.dp, MaterialTheme.colorScheme.primary)
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        "${Categories.emoji(goal.category)} ${goal.category}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = catColor
+                        "DAILY QUESTS",
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontSize   = 10.sp,
+                        fontFamily = PixelFontFamily,
+                        letterSpacing = 2.sp
+                    )
+                    todaysQuests.forEach { quest ->
+                        DailyQuestRow(quest)
+                    }
+                }
+            }
+        }
+
+        // ── Active goals list preview ─────────────────────────────
+        if (activeGoals.isNotEmpty()) {
+            item {
+                Text(
+                    "ACTIVE MISSIONS",
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize   = 10.sp,
+                    fontFamily = PixelFontFamily,
+                    letterSpacing = 1.sp
+                )
+            }
+            items(activeGoals.take(3)) { goal ->
+                GoalRowCard(goal, onClick = { navController.navigate("editGoal/${goal.id}") })
+            }
+            if (activeGoals.size > 3) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, Color(0xFF333333))
+                            .background(MaterialTheme.colorScheme.background)
+                            .clickable { navController.navigate("goals") }
+                            .padding(12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "VIEW ALL ${activeGoals.size} MISSIONS",
+                            color      = Color(0xFF666666),
+                            fontSize   = 8.sp,
+                            fontFamily = PixelFontFamily,
+                            letterSpacing = 1.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        item { Spacer(Modifier.height(100.dp)) }
+    }
+}
+
+// ── Shared: Goal row card (also used by GoalListScreen) ───────────
+
+@Composable
+fun GoalRowCard(goal: Goal, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(2.dp, MaterialTheme.colorScheme.primary)
+            .background(MaterialTheme.colorScheme.background)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                PixelCategoryIcon(
+                    category = goal.category,
+                    modifier = Modifier.size(22.dp)
+                )
+                Spacer(Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        goal.title.uppercase(),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontSize = 9.sp,
+                        fontFamily = PixelFontFamily,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    val recLabel = goal.recurrenceLabel()
+                    Text(
+                        "Due ${dispFmt.format(Date(goal.endDate))}  ${goal.difficulty.uppercase()}" +
+                                if (recLabel.isNotEmpty()) "  ↺$recLabel" else "",
+                        color    = Color(0xFF777777),
+                        fontSize = 7.sp,
+                        fontFamily = PixelFontFamily
+                    )
+                }
+                val diffColor = when (goal.difficulty) {
+                    "Boss"   -> Color.White
+                    "Hard"   -> Color(0xFFCCCCCC)
+                    "Medium" -> Color(0xFF999999)
+                    else     -> Color(0xFF666666)
+                }
+                Box(
+                    modifier = Modifier
+                        .border(1.dp, diffColor)
+                        .padding(horizontal = 5.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        goal.difficulty.uppercase(),
+                        color    = diffColor,
+                        fontSize = 7.sp,
+                        fontFamily = PixelFontFamily
                     )
                 }
             }
-            Spacer(Modifier.height(10.dp))
-            Text(goal.title, style = MaterialTheme.typography.titleLarge, color = SoftWhite)
-            Spacer(Modifier.height(6.dp))
-            Text(
-                "$daysLeft days remaining · due ${formatter.format(Date(goal.endDate))}",
-                style = MaterialTheme.typography.bodySmall, color = MutedText
-            )
-            Spacer(Modifier.height(14.dp))
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(SoftGreen.copy(alpha = 0.12f))
-                    .border(1.dp, SoftGreen.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-                    .clickable(onClick = onComplete)
-                    .padding(horizontal = 18.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.CheckCircle, null, tint = SoftGreen, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Mark Complete", style = MaterialTheme.typography.labelLarge, color = SoftGreen)
+            // Pixel progress bar (only if partially done)
+            if (goal.progressPercent > 0) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    val seg    = 10
+                    val filled = (goal.progressPercent * seg / 100).coerceIn(0, seg)
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        repeat(seg) { i ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(4.dp)
+                                    .background(if (i < filled) Color.White else Color(0xFF333333))
+                            )
+                        }
+                    }
+                    Text(
+                        "${goal.progressPercent}%",
+                        color    = Color(0xFF888888),
+                        fontSize = 6.sp,
+                        fontFamily = PixelFontFamily
+                    )
+                }
             }
         }
     }
 }
 
-// ── Mini stat card ────────────────────────────────────────────
+// ── Pixel stat box ────────────────────────────────────────────────
+
 @Composable
-private fun GlowMiniCard(modifier: Modifier, emoji: String, label: String, value: String, glowColor: Color) {
+private fun PixelStatBox(
+    modifier: Modifier,
+    icon: @Composable (Modifier) -> Unit,
+    value: String,
+    unit: String,
+    label: String
+) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(MidnightCard.copy(alpha = 0.45f))
-            .border(1.dp, glowColor.copy(alpha = 0.12f), RoundedCornerShape(16.dp))
+            .border(2.dp, MaterialTheme.colorScheme.primary)
+            .background(MaterialTheme.colorScheme.background)
             .padding(14.dp)
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(emoji, fontSize = 20.sp)
-            Spacer(Modifier.height(6.dp))
-            Text(value, style = MaterialTheme.typography.headlineSmall, color = glowColor)
-            Text(label, style = MaterialTheme.typography.labelSmall, color = DimText, letterSpacing = 0.5.sp)
-        }
-    }
-}
-
-// ── Tab button ────────────────────────────────────────────────
-@Composable
-private fun AtmosphericTab(text: String, selected: Boolean, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (selected) CyanGlow.copy(alpha = 0.1f) else Color.Transparent)
-            .border(1.dp, if (selected) CyanGlow.copy(alpha = 0.3f) else CardBorder.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 10.dp)
-    ) {
-        Text(text, style = MaterialTheme.typography.labelLarge, color = if (selected) CyanGlow else DimText)
-    }
-}
-
-// ── Goal Card ─────────────────────────────────────────────────
-@Composable
-private fun GoalCard(
-    goal: Goal, formatter: SimpleDateFormat,
-    onComplete: () -> Unit, onUncomplete: () -> Unit, onEdit: () -> Unit, onDelete: () -> Unit
-) {
-    val progress   = calculateProgress(goal.startDate, goal.endDate)
-    val catColor   = Categories.color(goal.category)
-    val diffColor  = when (goal.difficulty) { "Easy" -> SoftGreen; "Medium" -> SoftYellow; "Hard" -> SoftRed; else -> MutedText }
-    val borderGlow = if (goal.isCompleted) SoftGreen.copy(alpha = 0.12f) else catColor.copy(alpha = 0.1f)
-
-    Box(
-        modifier = Modifier.fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(MidnightCard.copy(alpha = 0.45f))
-            .border(1.dp, borderGlow, RoundedCornerShape(18.dp))
-            .animateContentSize(tween(300))
-    ) {
-        // Left accent stripe
-        Box(
-            modifier = Modifier
-                .width(3.dp)
-                .height(100.dp)
-                .clip(RoundedCornerShape(topStart = 18.dp, bottomStart = 18.dp))
-                .background(Brush.verticalGradient(listOf(catColor, catColor.copy(alpha = 0.1f))))
-                .align(Alignment.CenterStart)
-        )
-
-        Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 14.dp)) {
-            Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.Top) {
-                Column(Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            "${Categories.emoji(goal.category)} ",
-                            fontSize = 14.sp
-                        )
-                        Text(
-                            goal.title,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = if (goal.isCompleted) DimText else SoftWhite,
-                            textDecoration = if (goal.isCompleted) TextDecoration.LineThrough else null,
-                            maxLines = 1, overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Spacer(Modifier.height(4.dp))
+        Column {
+            icon(Modifier.size(26.dp))
+            Spacer(Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    value,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize   = 24.sp,
+                    fontFamily = PixelFontFamily
+                )
+                if (unit.isNotEmpty()) {
+                    Spacer(Modifier.width(3.dp))
                     Text(
-                        "${formatter.format(Date(goal.startDate))} → ${formatter.format(Date(goal.endDate))}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = DimText
+                        unit,
+                        color      = Color(0xFF888888),
+                        fontSize   = 7.sp,
+                        fontFamily = PixelFontFamily,
+                        modifier   = Modifier.padding(bottom = 4.dp)
                     )
                 }
-
-                Row {
-                    if (!goal.isCompleted) {
-                        IconButton(onClick = onComplete, Modifier.size(32.dp)) {
-                            Icon(Icons.Default.CheckCircle, null, tint = SoftGreen.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
-                        }
-                        IconButton(onClick = onEdit, Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Edit, null, tint = MutedText.copy(alpha = 0.5f), modifier = Modifier.size(15.dp))
-                        }
-                    } else {
-                        IconButton(onClick = onUncomplete, Modifier.size(32.dp)) {
-                            Icon(Icons.Default.CheckCircle, null, tint = CyanGlow.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
-                        }
-                    }
-                    IconButton(onClick = onDelete, Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Delete, null, tint = SoftRed.copy(alpha = 0.35f), modifier = Modifier.size(15.dp))
-                    }
-                }
             }
-
-            Spacer(Modifier.height(12.dp))
-
-            LinearProgressIndicator(
-                progress = { if (goal.isCompleted) 1f else progress },
-                modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
-                color = if (goal.isCompleted) SoftGreen.copy(alpha = 0.6f) else catColor.copy(alpha = 0.7f),
-                trackColor = CardBorder.copy(alpha = 0.25f),
-                strokeCap = StrokeCap.Round
+            Spacer(Modifier.height(2.dp))
+            Text(
+                label,
+                color      = Color(0xFF666666),
+                fontSize   = 7.sp,
+                fontFamily = PixelFontFamily,
+                letterSpacing = 0.5.sp
             )
-
-            Spacer(Modifier.height(10.dp))
-
-            Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                Text(
-                    if (goal.isCompleted) "Completed ✓" else "${(progress * 100).toInt()}% elapsed",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (goal.isCompleted) SoftGreen.copy(alpha = 0.7f) else MutedText
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    TagChip(goal.difficulty, diffColor)
-                }
-            }
         }
     }
 }
 
+// ── Daily Quest row ───────────────────────────────────────────────
+
 @Composable
-private fun TagChip(text: String, color: Color) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(color.copy(alpha = 0.08f))
-            .border(1.dp, color.copy(alpha = 0.18f), RoundedCornerShape(8.dp))
-            .padding(horizontal = 9.dp, vertical = 3.dp)
-    ) {
-        Text(text, style = MaterialTheme.typography.labelSmall, color = color.copy(alpha = 0.9f))
+private fun DailyQuestRow(quest: DailyQuest) {
+    val progress = quest.progress
+    val segments = 8
+    val filled   = (progress * segments).toInt()
+
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment     = Alignment.CenterVertically
+        ) {
+            Text(
+                quest.description,
+                color      = if (quest.isCompleted) Color(0xFF555555) else Color.White,
+                fontSize   = 8.sp,
+                fontFamily = PixelFontFamily,
+                modifier   = Modifier.weight(1f)
+            )
+            Text(
+                if (quest.isCompleted) "DONE" else "+${quest.xpReward}XP",
+                color      = if (quest.isCompleted) Color(0xFF555555) else Color(0xFF888888),
+                fontSize   = 7.sp,
+                fontFamily = PixelFontFamily
+            )
+        }
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            repeat(segments) { i ->
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(5.dp)
+                        .background(
+                            when {
+                                quest.isCompleted -> Color(0xFF444444)
+                                i < filled        -> Color.White
+                                else              -> MaterialTheme.colorScheme.surface
+                            }
+                        )
+                )
+            }
+        }
+        Text(
+            "${quest.currentValue}/${quest.targetValue} COMPLETED",
+            color      = Color(0xFF555555),
+            fontSize   = 6.sp,
+            fontFamily = PixelFontFamily
+        )
     }
 }

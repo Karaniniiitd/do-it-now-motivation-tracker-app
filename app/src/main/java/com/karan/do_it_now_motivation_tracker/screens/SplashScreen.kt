@@ -1,7 +1,6 @@
 package com.karan.do_it_now_motivation_tracker.screens
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -15,203 +14,192 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.karan.do_it_now_motivation_tracker.ui.theme.AtmosphericBlack
-import com.karan.do_it_now_motivation_tracker.ui.theme.CyanGlow
-import com.karan.do_it_now_motivation_tracker.ui.theme.MutedText
-import com.karan.do_it_now_motivation_tracker.ui.theme.SandPixel
-import com.karan.do_it_now_motivation_tracker.ui.theme.SoftIndigo
+import com.karan.do_it_now_motivation_tracker.ui.theme.PixelFontFamily
 import kotlinx.coroutines.delay
 
-// Pixel art hourglass frame (17 wide x 19 tall)
-// '#' = frame pixel, '.' = empty
-private val hourglassFrame = listOf(
-    "#################",
-    "#################",
-    "##.............##",
-    ".##...........##.",
-    "..##.........##..",
-    "...##.......##...",
-    "....##.....##....",
-    ".....##...##.....",
-    "......##.##......",
-    ".......###.......",
-    "......##.##......",
-    ".....##...##.....",
-    "....##.....##....",
-    "...##.......##...",
-    "..##.........##..",
-    ".##...........##.",
-    "##.............##",
-    "#################",
-    "#################"
-)
+// ── Pixel hourglass grid (17 wide × 19 tall) ─────────────────
+private val hourglassFrame = setOf(
+    // Top bar
+    2..14 to 0, 1..15 to 1,
+    // Top slopes
+    2..3 to 2, 13..14 to 2,
+    3..4 to 3, 12..13 to 3,
+    4..5 to 4, 11..12 to 4,
+    5..6 to 5, 10..11 to 5,
+    6..7 to 6, 9..10 to 6,
+    7..8 to 7, 8..9 to 7,
+    // Neck
+    8..8 to 8,
+    7..9 to 9,
+    // Bottom slopes
+    6..7 to 10, 9..10 to 10,
+    5..6 to 11, 10..11 to 11,
+    4..5 to 12, 11..12 to 12,
+    3..4 to 13, 12..13 to 13,
+    2..3 to 14, 13..14 to 14,
+    1..15 to 15,
+    // Bottom bar
+    2..14 to 16, 1..15 to 17,
+    3..13 to 18
+).flatMap { (xRange, y) ->
+    xRange.map { x -> x to y }
+}.toSet()
 
-// Interior sand rows for top half (rows 2-8) - (startCol, endCol) inclusive
-private val topSandRows = listOf(
-    2 to Pair(2, 14),   // row 2: 13 pixels
-    3 to Pair(3, 13),   // row 3: 11
-    4 to Pair(4, 12),   // row 4: 9
-    5 to Pair(5, 11),   // row 5: 7
-    6 to Pair(6, 10),   // row 6: 5
-    7 to Pair(7, 9),    // row 7: 3
-    8 to Pair(8, 8),    // row 8: 1
-)
+private fun isFramePixel(x: Int, y: Int): Boolean {
+    return hourglassFrame.contains(x to y)
+}
 
-// Interior sand rows for bottom half (rows 10-16) - mirror
-private val bottomSandRows = listOf(
-    10 to Pair(8, 8),
-    11 to Pair(7, 9),
-    12 to Pair(6, 10),
-    13 to Pair(5, 11),
-    14 to Pair(4, 12),
-    15 to Pair(3, 13),
-    16 to Pair(2, 14),
-)
+// Sand fills top compartment rows 2-7 (full rows inside frame)
+private fun isTopSand(x: Int, y: Int, progress: Float): Boolean {
+    if (y !in 2..7) return false
+    val fullRows = 6 // rows 2–7
+    val sandRows = (fullRows * (1f - progress)).toInt()
+    if (y > 2 + sandRows - 1) return false
+    val innerStart = when (y) { 2 -> 4; 3 -> 5; 4 -> 6; 5 -> 7; 6 -> 8; else -> 8 }
+    val innerEnd   = when (y) { 2 -> 13; 3 -> 12; 4 -> 11; 5 -> 10; 6 -> 9; else -> 9 }
+    return x in innerStart..innerEnd
+}
+
+// Sand fills bottom compartment rows 10-16
+private fun isBottomSand(x: Int, y: Int, progress: Float): Boolean {
+    if (y !in 10..16) return false
+    val fullRows = 7
+    val sandRows = (fullRows * progress).toInt()
+    val bottomRow = 16
+    if (y < bottomRow - sandRows + 1) return false
+    val innerStart = when (y) { 10 -> 8; 11 -> 7; 12 -> 6; 13 -> 5; 14 -> 4; 15 -> 3; else -> 3 }
+    val innerEnd   = when (y) { 10 -> 9; 11 -> 10; 12 -> 11; 13 -> 12; 14 -> 13; 15 -> 14; else -> 14 }
+    return x in innerStart..innerEnd
+}
 
 @Composable
 fun SplashScreen(onFinished: () -> Unit) {
     val sandProgress = remember { Animatable(0f) }
+    val textAlpha    = remember { Animatable(0f) }
 
-    val inf = rememberInfiniteTransition(label = "splash")
-    val glowPulse by inf.animateFloat(
-        initialValue = 0.15f, targetValue = 0.45f,
-        animationSpec = infiniteRepeatable(
-            tween(2000, easing = LinearEasing), RepeatMode.Reverse
-        ), label = "glow"
+    val inf = rememberInfiniteTransition(label = "blink")
+    val cursorBlink by inf.animateFloat(
+        0f, 1f,
+        infiniteRepeatable(tween(500, easing = LinearEasing), RepeatMode.Reverse),
+        label = "blink"
     )
 
-    val textAlpha = remember { Animatable(0f) }
-
     LaunchedEffect(Unit) {
-        delay(300)
-        textAlpha.animateTo(1f, tween(800))
-        sandProgress.animateTo(1f, tween(2200, easing = FastOutSlowInEasing))
-        delay(500)
+        delay(200)
+        textAlpha.animateTo(1f, tween(600))
+        sandProgress.animateTo(1f, tween(2400, easing = LinearEasing))
+        delay(600)
         onFinished()
     }
 
     Box(
-        modifier = Modifier.fillMaxSize().background(AtmosphericBlack),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                // Ambient glow behind hourglass
-                Canvas(modifier = Modifier.size(220.dp)) {
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            listOf(
-                                CyanGlow.copy(alpha = glowPulse * 0.2f),
-                                SoftIndigo.copy(alpha = glowPulse * 0.08f),
-                                Color.Transparent
-                            ), radius = size.minDimension * 0.6f
-                        ), radius = size.minDimension * 0.6f
-                    )
-                }
+            Spacer(Modifier.height(60.dp))
 
-                // Pixel art hourglass
-                Canvas(modifier = Modifier.size(170.dp)) {
-                    val cols = 17
-                    val rows = 19
-                    val pixelW = size.width / cols
-                    val pixelH = size.height / rows
-                    val pSize = Size(pixelW - 1f, pixelH - 1f) // 1px gap for pixel look
+            // ── App Title ──────────────────────────────────────
+            Column(
+                modifier = Modifier.alpha(textAlpha.value),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text      = "DO IT",
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize  = 36.sp,
+                    fontFamily = PixelFontFamily,
+                    letterSpacing = 4.sp,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text      = "NOW",
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize  = 36.sp,
+                    fontFamily = PixelFontFamily,
+                    letterSpacing = 4.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
 
-                    val prog = sandProgress.value
-                    val topVisible = ((1f - prog) * 7).toInt() // 0..7 rows remaining
-                    val bottomVisible = (prog * 7).toInt()     // 0..7 rows filled
+            // ── Pixel Hourglass ────────────────────────────────
+            Canvas(modifier = Modifier.size(200.dp, 240.dp)) {
+                val cols = 17
+                val rows = 19
+                val cellW = size.width / cols
+                val cellH = size.height / rows
+                val progress = sandProgress.value
 
-                    // Draw frame
-                    for (r in 0 until rows) {
-                        val line = hourglassFrame[r]
-                        for (c in 0 until cols) {
-                            if (line[c] == '#') {
-                                drawRect(
-                                    color = Color.White,
-                                    topLeft = Offset(c * pixelW, r * pixelH),
-                                    size = pSize
-                                )
-                            }
+                for (row in 0 until rows) {
+                    for (col in 0 until cols) {
+                        val draw = when {
+                            isFramePixel(col, row)                    -> true
+                            isBottomSand(col, row, progress)          -> true
+                            isTopSand(col, row, progress)             -> true
+                            // Falling sand stream at neck
+                            col == 8 && row == 8 && progress < 0.9f  -> true
+                            else                                       -> false
                         }
-                    }
-
-                    // Draw top sand (empties from bottom)
-                    for (i in 0 until topVisible) {
-                        val (row, range) = topSandRows[i]
-                        val (sc, ec) = range
-                        for (c in sc..ec) {
-                            drawRect(
-                                color = SandPixel,
-                                topLeft = Offset(c * pixelW, row * pixelH),
-                                size = pSize
+                        if (draw) {
+                            drawRoundRect(
+                                color = MaterialTheme.colorScheme.onBackground,
+                                topLeft = Offset(col * cellW + 1f, row * cellH + 1f),
+                                size = Size(cellW - 2f, cellH - 2f),
+                                cornerRadius = CornerRadius(1f)
                             )
                         }
-                    }
-
-                    // Draw bottom sand (fills from bottom)
-                    for (i in 0 until bottomVisible) {
-                        val idx = bottomSandRows.size - 1 - i // fill from bottom row up
-                        val (row, range) = bottomSandRows[idx]
-                        val (sc, ec) = range
-                        for (c in sc..ec) {
-                            drawRect(
-                                color = SandPixel,
-                                topLeft = Offset(c * pixelW, row * pixelH),
-                                size = pSize
-                            )
-                        }
-                    }
-
-                    // Falling stream through neck
-                    if (prog in 0.05f..0.92f) {
-                        val neckCol = 8
-                        drawRect(
-                            color = SandPixel.copy(alpha = 0.8f),
-                            topLeft = Offset(neckCol * pixelW, 9 * pixelH),
-                            size = pSize
-                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
-
-            Text(
-                text = "Do It Now",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Thin,
-                color = Color.White.copy(alpha = textAlpha.value),
-                letterSpacing = 4.sp
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = "build discipline",
-                style = MaterialTheme.typography.bodySmall,
-                color = MutedText.copy(alpha = textAlpha.value * 0.7f),
-                letterSpacing = 3.sp
-            )
+            // ── Subtitle ───────────────────────────────────────
+            Column(
+                modifier = Modifier.alpha(textAlpha.value).padding(bottom = 72.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text      = "MAXIMIZE YOUR",
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize  = 12.sp,
+                    fontFamily = PixelFontFamily,
+                    letterSpacing = 2.sp,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text      = "PRODUCTIVITY",
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize  = 12.sp,
+                    fontFamily = PixelFontFamily,
+                    letterSpacing = 2.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }

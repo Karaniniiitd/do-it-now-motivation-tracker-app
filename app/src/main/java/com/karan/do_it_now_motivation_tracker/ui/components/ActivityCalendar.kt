@@ -124,7 +124,9 @@ fun ActivityCalendar(logs: List<DailyLog>) {
                     Column(modifier = Modifier.padding(top = 14.dp)) {
                         dayLabels.forEach { label ->
                             Box(
-                                modifier = Modifier.size(cellSize, cellSize).padding(bottom = cellGap),
+                                modifier = Modifier
+                                    .height(cellStep)
+                                    .width(leftPad - 4.dp),
                                 contentAlignment = Alignment.CenterEnd
                             ) {
                                 if (label.isNotEmpty()) {
@@ -136,7 +138,6 @@ fun ActivityCalendar(logs: List<DailyLog>) {
                                     )
                                 }
                             }
-                            if (label.isNotEmpty()) Spacer(Modifier.height(cellGap))
                         }
                     }
 

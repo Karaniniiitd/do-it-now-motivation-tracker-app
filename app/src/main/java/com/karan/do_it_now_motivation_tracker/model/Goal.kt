@@ -10,16 +10,27 @@ data class Goal(
     val title: String,
     val startDate: Long,
     val endDate: Long,
-    val difficulty: String,
-    val category: String = "General",
+    val difficulty: String,           // Easy | Medium | Hard | Boss
+    val category: String = "Mission",
     val isCompleted: Boolean = false,
     val completedDate: Long? = null,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val progressPercent: Int = 0,
+    val notes: String = "",
+    val recurrenceType: String? = null // null | "daily" | "weekly" | "monthly"
 )
 
 fun Goal.xpReward(): Int = when (difficulty) {
     "Easy"   -> 10
     "Medium" -> 25
     "Hard"   -> 50
+    "Boss"   -> 100
     else     -> 10
+}
+
+fun Goal.recurrenceLabel(): String = when (recurrenceType) {
+    "daily"   -> "DAILY"
+    "weekly"  -> "WEEKLY"
+    "monthly" -> "MONTHLY"
+    else      -> ""
 }

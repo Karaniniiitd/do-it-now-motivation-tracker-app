@@ -1,39 +1,33 @@
 package com.karan.do_it_now_motivation_tracker.navigation
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -44,149 +38,62 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.karan.do_it_now_motivation_tracker.screens.AddGoalScreen
+import com.karan.do_it_now_motivation_tracker.screens.CategoryAnalyticsScreen
+import com.karan.do_it_now_motivation_tracker.screens.CharacterScreen
 import com.karan.do_it_now_motivation_tracker.screens.DashboardScreen
 import com.karan.do_it_now_motivation_tracker.screens.EditGoalScreen
+import com.karan.do_it_now_motivation_tracker.screens.GoalListScreen
+import com.karan.do_it_now_motivation_tracker.screens.LeaderboardScreen
+import com.karan.do_it_now_motivation_tracker.screens.LoginScreen
+import com.karan.do_it_now_motivation_tracker.screens.OnboardingScreen
 import com.karan.do_it_now_motivation_tracker.screens.ProfileScreen
 import com.karan.do_it_now_motivation_tracker.screens.SplashScreen
-import com.karan.do_it_now_motivation_tracker.ui.theme.AtmosphericBlack
-import com.karan.do_it_now_motivation_tracker.ui.theme.CardBorder
-import com.karan.do_it_now_motivation_tracker.ui.theme.CyanGlow
-import com.karan.do_it_now_motivation_tracker.ui.theme.DarkBlueSurface
-import com.karan.do_it_now_motivation_tracker.ui.theme.DeepNavy
-import com.karan.do_it_now_motivation_tracker.ui.theme.DimText
-import com.karan.do_it_now_motivation_tracker.ui.theme.MutedPurple
-import com.karan.do_it_now_motivation_tracker.ui.theme.SoftIndigo
+import com.karan.do_it_now_motivation_tracker.screens.WeeklyReportScreen
+import com.karan.do_it_now_motivation_tracker.ui.components.PixelIconBarChartNav
+import com.karan.do_it_now_motivation_tracker.ui.components.PixelIconClipboard
+import com.karan.do_it_now_motivation_tracker.ui.components.PixelIconGear
+import com.karan.do_it_now_motivation_tracker.ui.components.PixelIconHome
+import com.karan.do_it_now_motivation_tracker.ui.components.PixelIconPlus
+import com.karan.do_it_now_motivation_tracker.ui.theme.PixelFontFamily
+import com.karan.do_it_now_motivation_tracker.util.FirebaseManager
+import com.karan.do_it_now_motivation_tracker.util.UserPrefsManager
 import com.karan.do_it_now_motivation_tracker.viewmodel.GoalViewModel
+
+private val bottomBarRoutes = setOf("dashboard", "goals", "profile", "analytics", "character", "weeklyReport")
 
 @Composable
 fun AppNavigation() {
-    val navController = rememberNavController()
+    val navController  = rememberNavController()
     val goalViewModel: GoalViewModel = viewModel()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    val showBottomBar = currentRoute in listOf("dashboard", "profile")
+    val context        = LocalContext.current
+    val prefs          = remember { UserPrefsManager.getInstance(context) }
+
+    // Ensure weekly report generated on app launch
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        goalViewModel.ensureWeeklyReport()
+    }
+
+    val navBackStack by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStack?.destination?.route
+    val showBottomBar = currentRoute in bottomBarRoutes
 
     Scaffold(
-        containerColor = AtmosphericBlack,
+        containerColor = Color.Black,
         bottomBar = {
-            AnimatedVisibility(
-                visible = showBottomBar,
-                enter = slideInVertically(tween(400)) { it } + fadeIn(tween(400)),
-                exit = slideOutVertically(tween(300)) { it } + fadeOut(tween(300))
-            ) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(DeepNavy.copy(alpha = 0.95f), AtmosphericBlack.copy(alpha = 0.98f))
-                            )
-                        )
-                        .border(
-                            width = 1.dp,
-                            brush = Brush.horizontalGradient(
-                                listOf(
-                                    CyanGlow.copy(alpha = 0.08f),
-                                    SoftIndigo.copy(alpha = 0.12f),
-                                    CyanGlow.copy(alpha = 0.08f)
-                                )
-                            ),
-                            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-                        )
-                ) {
-                    NavigationBar(
-                        containerColor = Color.Transparent,
-                        tonalElevation = 0.dp,
-                        modifier = Modifier.height(70.dp)
-                    ) {
-                        NavigationBarItem(
-                            icon = {
-                                Icon(
-                                    if (currentRoute == "dashboard") Icons.Filled.Home else Icons.Outlined.Home,
-                                    contentDescription = "Home",
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            },
-                            label = {
-                                Text("home", fontSize = 10.sp, letterSpacing = 1.sp)
-                            },
-                            selected = currentRoute == "dashboard",
-                            onClick = {
-                                if (currentRoute != "dashboard") {
-                                    navController.navigate("dashboard") {
-                                        popUpTo("dashboard") { inclusive = true }
-                                    }
-                                }
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = CyanGlow,
-                                selectedTextColor = CyanGlow.copy(alpha = 0.7f),
-                                unselectedIconColor = DimText,
-                                unselectedTextColor = DimText,
-                                indicatorColor = CyanGlow.copy(alpha = 0.08f)
-                            )
-                        )
-
-                        // Spacer for center FAB
-                        NavigationBarItem(
-                            icon = {}, label = {}, selected = false,
-                            onClick = {}, enabled = false
-                        )
-
-                        NavigationBarItem(
-                            icon = {
-                                Icon(
-                                    if (currentRoute == "profile") Icons.Filled.Person else Icons.Outlined.Person,
-                                    contentDescription = "Profile",
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            },
-                            label = {
-                                Text("profile", fontSize = 10.sp, letterSpacing = 1.sp)
-                            },
-                            selected = currentRoute == "profile",
-                            onClick = {
-                                if (currentRoute != "profile") {
-                                    navController.navigate("profile") {
-                                        popUpTo("dashboard")
-                                    }
-                                }
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MutedPurple,
-                                selectedTextColor = MutedPurple.copy(alpha = 0.7f),
-                                unselectedIconColor = DimText,
-                                unselectedTextColor = DimText,
-                                indicatorColor = MutedPurple.copy(alpha = 0.08f)
-                            )
-                        )
-                    }
-                }
-            }
-        },
-        floatingActionButton = {
             if (showBottomBar) {
-                FloatingActionButton(
-                    onClick = { navController.navigate("addGoal") },
-                    containerColor = Color.Transparent,
-                    contentColor = CyanGlow,
-                    shape = CircleShape,
-                    modifier = Modifier
-                        .size(54.dp)
-                        .border(
-                            1.dp,
-                            Brush.sweepGradient(
-                                listOf(CyanGlow.copy(alpha = 0.5f), SoftIndigo.copy(alpha = 0.3f), CyanGlow.copy(alpha = 0.5f))
-                            ),
-                            CircleShape
-                        )
-                        .background(
-                            Brush.radialGradient(listOf(DarkBlueSurface, AtmosphericBlack)),
-                            CircleShape
-                        )
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Goal", modifier = Modifier.size(22.dp))
-                }
+                PixelBottomNav(
+                    currentRoute = currentRoute,
+                    onNavClick = { route ->
+                        if (currentRoute != route) {
+                            navController.navigate(route) {
+                                popUpTo("dashboard") { saveState = true }
+                                launchSingleTop = true
+                                restoreState    = true
+                            }
+                        }
+                    },
+                    onAddClick = { navController.navigate("addGoal") }
+                )
             }
         }
     ) { padding ->
@@ -194,42 +101,222 @@ fun AppNavigation() {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(AtmosphericBlack)
+                .background(Color.Black)
         ) {
             NavHost(
-                navController = navController,
+                navController    = navController,
                 startDestination = "splash",
-                enterTransition = { fadeIn(tween(500)) },
-                exitTransition = { fadeOut(tween(300)) }
+                enterTransition  = { fadeIn(tween(300)) },
+                exitTransition   = { fadeOut(tween(200)) }
             ) {
+                // Splash — decides next screen
                 composable("splash") {
                     SplashScreen(onFinished = {
-                        navController.navigate("dashboard") {
+                        val dest = when {
+                            !prefs.hasOnboarded          -> "onboarding"
+                            else                          -> "dashboard"
+                        }
+                        navController.navigate(dest) {
                             popUpTo("splash") { inclusive = true }
                         }
                     })
                 }
 
+                // Onboarding
+                composable("onboarding") {
+                    OnboardingScreen(navController)
+                }
+
+                // Dashboard
                 composable("dashboard") {
                     DashboardScreen(navController, goalViewModel)
                 }
 
+                // Goals list
+                composable("goals") {
+                    GoalListScreen(navController, goalViewModel)
+                }
+
+                // Add goal
                 composable("addGoal") {
                     AddGoalScreen(navController, goalViewModel)
                 }
 
+                // Edit goal
                 composable(
                     "editGoal/{goalId}",
                     arguments = listOf(navArgument("goalId") { type = NavType.IntType })
-                ) { backStackEntry ->
-                    val goalId = backStackEntry.arguments?.getInt("goalId") ?: 0
+                ) { back ->
+                    val goalId = back.arguments?.getInt("goalId") ?: 0
                     EditGoalScreen(navController, goalViewModel, goalId)
                 }
 
+                // Profile / Stats
                 composable("profile") {
-                    ProfileScreen(goalViewModel)
+                    ProfileScreen(navController, goalViewModel)
+                }
+
+                // Category Analytics
+                composable("analytics") {
+                    CategoryAnalyticsScreen(goalViewModel)
+                }
+
+                // Character Screen
+                composable("character") {
+                    CharacterScreen(goalViewModel)
+                }
+
+                // Weekly Report
+                composable("weeklyReport") {
+                    WeeklyReportScreen(goalViewModel)
+                }
+
+                // Login
+                composable("login") {
+                    LoginScreen(
+                        viewModel    = goalViewModel,
+                        onLoginSuccess = {
+                            navController.navigate("dashboard") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        },
+                        onSkip = {
+                            navController.navigate("dashboard") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
+                // Leaderboard
+                composable("leaderboard") {
+                    val stats   = goalViewModel.userStats.collectAsState().value
+                    val streak  = goalViewModel.currentStreak.collectAsState().value
+                    val score   = ((streak * 3) + (goalViewModel.completedGoalCount.collectAsState().value * 2)).coerceAtMost(100)
+                    LeaderboardScreen(
+                        currentUid   = FirebaseManager.userId,
+                        currentStreak = streak,
+                        currentScore  = score,
+                        currentLevel  = stats.level
+                    )
                 }
             }
         }
+    }
+}
+
+// ── Pixel Bottom Nav ──────────────────────────────────────────────
+
+@Composable
+private fun PixelBottomNav(
+    currentRoute: String?,
+    onNavClick: (String) -> Unit,
+    onAddClick: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // 2dp white top border
+        Box(Modifier.fillMaxWidth().height(2.dp).background(Color.White))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.Black)
+                .padding(vertical = 2.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment     = Alignment.CenterVertically
+        ) {
+            // HOME
+            PixelNavItem(
+                icon     = { mod, col -> PixelIconHome(mod, col) },
+                label    = "HOME",
+                selected = currentRoute == "dashboard",
+                onClick  = { onNavClick("dashboard") },
+                modifier = Modifier.weight(1f)
+            )
+
+            // GOALS
+            PixelNavItem(
+                icon     = { mod, col -> PixelIconClipboard(mod, col) },
+                label    = "GOALS",
+                selected = currentRoute == "goals",
+                onClick  = { onNavClick("goals") },
+                modifier = Modifier.weight(1f)
+            )
+
+            // Center ADD button — raised white square
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .border(2.dp, Color.White)
+                        .background(Color.White)
+                        .clickable(onClick = onAddClick),
+                    contentAlignment = Alignment.Center
+                ) {
+                    PixelIconPlus(
+                        modifier = Modifier.size(26.dp),
+                        color    = Color.Black
+                    )
+                }
+            }
+
+            // STATS
+            PixelNavItem(
+                icon     = { mod, col -> PixelIconBarChartNav(mod, col) },
+                label    = "STATS",
+                selected = currentRoute == "profile",
+                onClick  = { onNavClick("profile") },
+                modifier = Modifier.weight(1f)
+            )
+
+            // ANALYTICS
+            PixelNavItem(
+                icon     = { mod, col -> PixelIconBarChartNav(mod, col) },
+                label    = "ANALYSIS",
+                selected = currentRoute == "analytics",
+                onClick  = { onNavClick("analytics") },
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun PixelNavItem(
+    icon: @Composable (Modifier, Color) -> Unit,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val iconColor = if (selected) Color.White else Color(0xFF555555)
+    Column(
+        modifier = modifier
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Selected top indicator
+        if (selected) {
+            Box(Modifier.width(22.dp).height(2.dp).background(Color.White))
+            Spacer(Modifier.height(4.dp))
+        } else {
+            Spacer(Modifier.height(6.dp))
+        }
+        icon(Modifier.size(20.dp), iconColor)
+        Spacer(Modifier.height(3.dp))
+        Text(
+            label,
+            color      = iconColor,
+            fontSize   = 6.sp,
+            fontFamily = PixelFontFamily,
+            fontWeight = FontWeight.Normal,
+            letterSpacing = 0.3.sp
+        )
     }
 }

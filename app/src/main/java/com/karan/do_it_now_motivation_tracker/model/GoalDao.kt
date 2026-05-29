@@ -37,4 +37,12 @@ interface GoalDao {
 
     @Query("SELECT COUNT(*) FROM goals WHERE isCompleted = 1")
     fun getCompletedGoalCount(): Flow<Int>
+
+    // One-shot (suspend) — used by Workers that can't collect flows
+    @Query("SELECT * FROM goals WHERE isCompleted = 0 ORDER BY endDate ASC")
+    suspend fun getActiveGoalsOnce(): List<Goal>
+
+    // Update only progress fields without overwriting everything
+    @Query("UPDATE goals SET progressPercent = :progress WHERE id = :id")
+    suspend fun updateProgress(id: Int, progress: Int)
 }
