@@ -63,6 +63,68 @@ SENSEI doesn't just answer questions. SENSEI knows your situation. SENSEI holds 
 
 ---
 
+## 📸 Screenshots
+
+<div align="center">
+
+### 🚀 Splash Screen
+*Pixel art hourglass intro — "MAXIMIZE YOUR PRODUCTIVITY"*
+
+<img src="screenshots/Splash Screen.jpeg" width="220"/>
+
+---
+
+### 🏠 Main Dashboard
+*Your mission HQ — animated donut ring, live streak, active goals, XP bar, and daily quests all in one view*
+
+<img src="screenshots/Main Screen.jpeg" width="220"/>
+
+---
+
+### 🤖 SENSEI — AI Coach
+*Chat with your personal AI productivity coach powered by Gemini. SENSEI knows your goals, XP, and level — and pushes you accordingly.*
+
+<img src="screenshots/Sensei AI.jpeg" width="220"/>
+
+---
+
+### 💬 SENSEI — Chat History
+*Start new sessions or resume old ones. Full conversation history saved locally — your coach never forgets.*
+
+<img src="screenshots/New Chat and Chat history in Sensei AI.jpeg" width="220"/>
+
+---
+
+### ⚔️ Character Screen
+*Your pixel warrior evolves with every level. Track XP, skill tree unlocks, freeze tokens, missions completed, and current streak.*
+
+<img src="screenshots/Character Screen.jpeg" width="220"/>
+
+---
+
+### 📊 Analytics Screen
+*Category-level mission breakdown — see exactly where you're winning and where you're slacking.*
+
+<img src="screenshots/Analytics Screen.jpeg" width="220"/>
+
+---
+
+### 📈 Stats Screen
+*Weekly performance report — grade, XP earned, active days, longest streak, and overall discipline score.*
+
+<img src="screenshots/Stats Screen.jpeg" width="220"/>
+
+---
+
+### 📤 Sharing Stats
+*One-tap pixel-art stat card — shareable to any app. Flex your level, streak, and XP anywhere.*
+
+<img src="screenshots/Sharing Stats.jpeg" width="220"/>
+
+</div>
+
+---
+
 ## ✨ Features
 
 ### 🏆 Gamification Engine
