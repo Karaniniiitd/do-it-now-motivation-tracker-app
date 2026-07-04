@@ -29,17 +29,17 @@ It is a **role-playing productivity system** built for people who are serious ab
 
 And when you are lost, confused, or need someone to light the fire under you?
 
-**Meet SENSEI** — your AI-powered personal coach, built right into the app.
+**Meet sensAI** — your AI-powered personal coach, built right into the app.
 
 ---
 
-## Meet SENSEI — Your AI Productivity Coach
+## Meet sensAI — Your AI Productivity Coach
 
 <div align="center">
 
 ```
 ┌─────────────────────────────────────────────┐
-│                   SENSEI                    │
+│                   sensAI                    │
 │         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓         │
 │  "I see you have 3 active missions and      │
 │   47 XP. You're 53 XP away from Level 2.   │
@@ -51,7 +51,7 @@ And when you are lost, confused, or need someone to light the fire under you?
 
 </div>
 
-SENSEI is powered by **Google's Gemini AI** and is deeply integrated with your personal data:
+sensAI is powered by **Google's Gemini AI** and is deeply integrated with your personal data:
 
 - Knows your **active goals**, their deadlines, and difficulty levels
 - Reads your **current XP**, level, and title in real time
@@ -59,7 +59,7 @@ SENSEI is powered by **Google's Gemini AI** and is deeply integrated with your p
 - Maintains full **multi-session chat history** — every conversation is saved and resumable
 - Replies with a signature **typewriter animation** — because wisdom deserves to be read slowly
 
-SENSEI does not just answer questions. SENSEI knows your situation. SENSEI holds you accountable.
+sensAI does not just answer questions. sensAI knows your situation. sensAI holds you accountable.
 
 ---
 
@@ -81,14 +81,14 @@ SENSEI does not just answer questions. SENSEI knows your situation. SENSEI holds
 
 ---
 
-### SENSEI — AI Coach
+### sensAI — AI Coach
 *Chat with your personal AI productivity coach powered by Gemini. SENSEI knows your goals, XP, and level — and pushes you accordingly.*
 
 <img src="screenshots/Sensei AI.jpeg" width="220"/>
 
 ---
 
-### SENSEI — Chat History
+### sensAI — Chat History
 *Start new sessions or resume old ones. Full conversation history saved locally — your coach never forgets.*
 
 <img src="screenshots/New Chat and Chat history in Sensei AI.jpeg" width="220"/>
